@@ -4,7 +4,7 @@
 
 # Session Data files
 .RData
-.RDataTmp
+*.RData
 
 # User-specific files
 .Ruserdata
@@ -19,6 +19,7 @@
 /*.Rcheck/
 
 # RStudio files
+.Rproj.user
 .Rproj.user/
 
 # produced vignettes
@@ -39,11 +40,20 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
+# Temporary files
+*~
+~$*.doc*
+~$*.xls*
+*.xlk
+~$*.ppt*
 
-# translation temp files
-po/*~
+# Prevent mac users to commit .DS_Store files
+*.DS_Store
 
-# RStudio Connect folder
-rsconnect/
+# Prevent users to commit the README files created by RStudio
+*README.html
+*README_cache/
+#*README_files/
+
+# Folder containing raw data
+data/raw data inc. latlon/
