@@ -21,6 +21,7 @@
 # RStudio files
 .Rproj.user
 .Rproj.user/
+SABE_Radiotelemetry_Public.Rproj
 
 # produced vignettes
 vignettes/*.html
