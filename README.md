@@ -1,18 +1,12 @@
 # Code and data for "Microhabitat preferences and movement exhbit distinct seasonal and sex-specific patterns in Beale's eyed turtles (*Sacalia bealei*)"
 
--   Authors:
-
-    -   Wing Sing Chan \## Add ORCID
-    -   Yik Hei Sung \## Add ORCID
-    -   Timothy C. Bonebrake \## Add ORCID
-
 This repository contains the data and code used in the analysis of the spatial patterns, habitat selection and microhabitat uses of Beale's eyed turtles (*Sacalia bealei*) in Hong Kong Special Administrative Region:
 
 > Chan, W. S., Sung, Y. H., & Bonebrake, T. C. (2024) Microhabitat and movement exhibit distinct seasonal and sex-specific patterns in Beale's eyed turtles (*Sacalia bealei*). *In prep*.
 
 ## Data
 
-All data are contained in the directory `data/`. The original data containing the spatial coordinates of the animals are deposited on Movebank (ID: 5056848767). Due to conservation concerns, accessing to the original data on Movebank is restricted to the project author only. All data in the repository were pre-processed to spatial estimates used to fit subsequent models.
+All data are contained in the directory `data/`. The original data containing the spatial coordinates of the animals are deposited on Movebank (ID: 5056848767). Due to conservation concerns, accessing to the original data on Movebank is restricted to the project team only. All data in the repository were pre-processed to spatial estimates used to fit subsequent models.
 
 -   `SABE_biometry.csv` contains biometric measurements of 25 monitored individuals
 
@@ -99,6 +93,5 @@ Questions regarding the code or the data should be directed to the project autho
 
 ## License
 
-This work is licensed under a [Creative Commons Attribution - Non-Commercial 4.0 International License](http://creativecommons.org/licenses/by-nc/4.0/).
-
-[Creative Commons License][]
+This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution - Non-Commercial 4.0 International License</a>.<br />
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commos License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a>
