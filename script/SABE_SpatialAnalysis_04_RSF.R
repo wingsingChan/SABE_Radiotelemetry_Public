@@ -13,6 +13,7 @@ library(lmerTest)
 library(ggplot2)
 library(ggfortify)
 library(ggrepel)
+library(ggpubr)
 library(gridExtra)
 library(broom.mixed)
 library(dotwhisker)
@@ -455,37 +456,38 @@ for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
   
 }
 
-for(i in 1:I(length(turtlesRSF.coefPlot)-1)){
-  turtlesRSF.coefPlot[[i]] <- turtlesRSF.coefPlot[[i]] + 
-    theme(legend.position = "none")
-  i = i + 1
-}
-
 ## Water Depth
-grid.arrange(turtlesRSF.coefPlot[[1]], 
-             turtlesRSF.MEPlot[[1]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[1]], 
+          turtlesRSF.MEPlot[[1]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Stream Width
-grid.arrange(turtlesRSF.coefPlot[[2]], 
-             turtlesRSF.MEPlot[[2]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[2]], 
+          turtlesRSF.MEPlot[[2]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Gravel
-grid.arrange(turtlesRSF.coefPlot[[3]], 
-             turtlesRSF.MEPlot[[3]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[3]], 
+          turtlesRSF.MEPlot[[3]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Pebble
-grid.arrange(turtlesRSF.coefPlot[[4]], 
-             turtlesRSF.MEPlot[[4]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[4]], 
+          turtlesRSF.MEPlot[[4]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Cobble
-grid.arrange(turtlesRSF.coefPlot[[5]], 
-             turtlesRSF.MEPlot[[5]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[5]], 
+          turtlesRSF.MEPlot[[5]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Leaf Litter
-grid.arrange(turtlesRSF.coefPlot[[6]], 
-             turtlesRSF.MEPlot[[6]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[6]], 
+          turtlesRSF.MEPlot[[6]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
 ## Canopy Cover
-grid.arrange(turtlesRSF.coefPlot[[7]], 
-             turtlesRSF.MEPlot[[7]], 
-             ncol = 2, widths = c(2,4))
+ggarrange(turtlesRSF.coefPlot[[7]], 
+          turtlesRSF.MEPlot[[7]], 
+          ncol = 2, widths = c(2,4), 
+          labels = c("A", "B"))
