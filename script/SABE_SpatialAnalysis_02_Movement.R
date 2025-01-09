@@ -231,7 +231,10 @@ ggplot(predMCP) +
         legend.title = element_blank()) +
   xlab("Carapace length (mm)") + 
   ylab(expression(paste("Predicted values of log(Home Range + 1) ", (m^2)))) + 
-  coord_cartesian(ylim=c(0, 12))
+  coord_cartesian(ylim=c(0, 12)) + 
+  scale_color_discrete(labels = c("Female", "Juvenile", "Male")) +
+  scale_fill_discrete(labels = c("Female", "Juvenile", "Male")) +
+  scale_shape(labels = c("Female", "Juvenile", "Male"))
 
 
 
@@ -299,7 +302,11 @@ ggplot(SABE.seasonDailyDistResults, aes(x = season.4, y = AvgDist, col = sex)) +
   geom_errorbar(aes(ymin = lwr, ymax = upr), width = .1, position = position_dodge(.6)) + 
   ylab("Measured daily displacement distance (m)") + 
   theme_classic() +  
-  theme(legend.position = c(.05,.65)) + 
+  theme(legend.position = c(.075,.9)) + 
   theme(axis.title.x = element_blank(), 
-        legend.title = element_blank())
+        legend.title = element_blank()) + 
+  scale_color_discrete(labels = c("Female", "Juvenile", "Male")) +
+  scale_fill_discrete(labels = c("Female", "Juvenile", "Male")) +
+  scale_shape(labels = c("Female", "Juvenile", "Male"))
+  
 
