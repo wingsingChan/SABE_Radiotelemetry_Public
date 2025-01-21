@@ -1,8 +1,8 @@
-# Code and data for "Microhabitat preferences and movement exhbit distinct seasonal and sex-specific patterns in Beale's eyed turtles (*Sacalia bealei*)"
+# Code and data for "Movement and space use patterns reveal greater vulnerability to environmental changes and poaching in the Beale’s eyed turtle (*Sacalia bealei*)"
 
 This repository contains the data and code used in the analysis of the spatial patterns, habitat selection and microhabitat uses of Beale's eyed turtles (*Sacalia bealei*) in Hong Kong Special Administrative Region:
 
-> Chan, W. S., Sung, Y. H., & Bonebrake, T. C. (2024) Microhabitat and movement exhibit distinct seasonal and sex-specific patterns in Beale's eyed turtles (*Sacalia bealei*). *In prep*.
+> Chan, W. S., Fong J. J., Bonebrake, T. C., & Sung, Y. H.  (2024) Movement and space use patterns reveal greater vulnerability to environmental changes and poaching in the Beale’s eyed turtle (*Sacalia bealei*). *In submission*.
 
 ## Data
 
