@@ -114,23 +114,26 @@ SABE.seasonDailyDistResults <- SABE.trajDf %>%
 ## Statistical Tests ---- 
 ### Linear Mixed Model: MCP ----
 mcpMd.global <- lmer(log(Area_m2 + 1) ~ # Biometric vars
-                                         sex + scale(cl) + scale(I(cl^2)) + 
+                                         sex + poly(scale(cl), 2) + 
                                         # Seasonal response
                                          season.4 + 
                                         # Reproductive drive
                                          sex * season.4 + 
                                         # Thermoregulative drive
-                                         scale(cl) * season.4 + 
-                                         scale(I(cl^2)) * season.4+ 
+                                         poly(scale(cl), 2) * season.4+ 
+                                        # Sampling efforts 
+                                         scale(Pts) +
                                         # Individual var.
                                          (1|turtle.id),
                      data = SABE.seasonMCPresults, na.action = "na.fail")
 step(mcpMd.global)
 
 mcpMd1 <- lmer(log(Area_m2 + 1) ~ # Biometric vars
-                                   sex + scale(cl) + scale(I(cl^2)) + 
+                                   sex + 
                                   # Seasonal response
                                    season.4 + 
+                                  # Sampling efforts 
+                                   scale(Pts) +
                                   # Individual var.
                                    (1|turtle.id),
                data = SABE.seasonMCPresults, na.action = "na.fail")
@@ -145,96 +148,22 @@ plot(mcpMd1)
 mcpMd1.sim <- simulateResiduals(mcpMd1)
 plot(mcpMd1.sim)
 
-### Plotting -- MCP vs Sex ----
-#### Figure S5. 
-ggplot(SABE.seasonMCPresults, aes(x = sex, y = Area_m2, fill = sex)) + 
-  geom_boxplot(outlier.shape = NA, width = .5) + 
-  geom_jitter(width = .1, alpha = .3) +
+### Plotting -- MCP vs Sex & Season 
+### Figure 2
+ggplot(SABE.seasonMCPresults, aes(x = sex, y = Area_m2, fill = sex, col = sex)) + 
+  facet_grid(~season.4) + 
+  geom_boxplot(outlier.shape = NA, alpha = .2) + 
+  geom_point(alpha = .6) +
   scale_x_discrete(labels = c("Female", "Juvenile", "Male")) + 
   ylab(expression(paste("Home range size  ", (m^2)))) + 
-  geom_signif(comparisons = list(c("M", "J"), c("M", "F")), 
-              map_signif_level = TRUE,
-              y_position = c(34000, 36000),
-              annotation = c("*", "**"), 
-              tip_length = 0.01, 
-              col = "black") + 
-  scale_y_continuous(breaks = seq(0, 30000, by = 10000)) +
-  theme_classic() + 
-  theme(axis.title.x = element_blank()) + 
-  theme(legend.position = "none")
-
-### Plotting -- MCP vs Season 
-### Figure 3
-ggplot(SABE.seasonMCPresults, aes(x = season.4, y = Area_m2, fill = season.4)) + 
-  geom_boxplot(outlier.shape = NA, width = .5) + 
-  geom_jitter(width = .1, alpha = .3) +
-  scale_x_discrete(labels = c("Nesting", "Wet", "Mating", "Dry")) + 
-  ylab(expression(paste("Home range size  ", (m^2)))) + 
-  geom_signif(comparisons = list(c("Nesting Season", "Wet Season")), 
-              map_signif_level = TRUE,
-              y_position = c(34000),
-              annotation = c("**"), 
-              tip_length = 0.01, 
-              col = "black") + 
-  scale_y_continuous(breaks = seq(0, 30000, by = 10000)) +
-  theme_classic() + 
-  theme(axis.title.x = element_blank()) + 
-  theme(legend.position = "none")
-
-### Plotting -- Predictive Model ----
-### Figure 2
-maleCA <- bio %>% filter(sex == "M") %>% summarise(seq(floor(min(cl)), floor(max(cl)), .1))
-maleCA <- as.vector(t(maleCA))
-predMale <- data.frame(sex = "M", season.4 = rep(c("Dry Season", "Nesting Season", "Wet Season", "Mating Season"), length(maleCA)), 
-                       cl = maleCA)
-femaleCA <- bio %>% filter(sex == "F") %>% summarise(seq(floor(min(cl)), floor(max(cl)), .1))
-femaleCA <- as.vector(t(femaleCA))
-predFemale <- data.frame(sex = "F", season.4 = rep(c("Dry Season", "Nesting Season", "Wet Season", "Mating Season"), length(femaleCA)), 
-                         cl = femaleCA)
-juvenileCA <- bio %>% filter(sex == "J") %>% summarise(seq(floor(min(cl)), floor(max(cl)), .1))
-juvenileCA <- as.vector(t(juvenileCA))
-predJuvenile <- data.frame(sex = "J", season.4 = rep(c("Dry Season", "Nesting Season", "Wet Season", "Mating Season"), length(juvenileCA)), 
-                           cl = juvenileCA)
-predDf <- rbind(predFemale, predJuvenile, predMale)
-predDf$sex <- factor(predDf$sex, c("F", "J", "M"))
-predDf$season.4 <- factor(predDf$season.4, c("Dry Season", "Nesting Season", "Wet Season", "Mating Season"))
-str(predDf)
-
-easyPredCI <- function(model, newdata, alpha=0.05) {
-  ## baseline prediction, on the linear predictor (logit) scale:
-  pred0 <- predict(model, newdata=newdata, re.form=NA)
-  ## fixed-effects model matrix for new data
-  X <- model.matrix(formula(model,fixed.only=TRUE)[-2], newdata)
-  beta <- fixef(model) ## fixed-effects coefficients 
-  V <- vcov(model)     ## variance-covariance matrix of beta
-  pred.se <- sqrt(diag(X %*% V %*% t(X))) ## std errors of predictions
-  ## construct 95% Normal CIs on the link scale and
-  ## transform back to the response (probability) scale:
-  ## crit <- -qnorm(alpha/2)
-  (cbind(fit = pred0,
-         lwr=pred0-1*pred.se,
-         upr=pred0+1*pred.se))
-}
-predMCP <- cbind(predDf, easyPredCI(mcpMd1, predDf))
-
-SABE.seasonMCPresults$response <- log(SABE.seasonMCPresults$Area_m2 + 1)
-ggplot(predMCP) + 
-  facet_wrap(~season.4, nrow = 1) + 
-  geom_line(aes(cl, fit, fill = factor(sex), col = factor(sex)), size = .4) +
-  geom_ribbon(aes(cl, ymin = lwr, ymax = upr, fill = factor(sex)), alpha = .2) +
-  geom_point(data = SABE.seasonMCPresults, 
-             aes(cl, y = response, color = factor(sex), shape = factor(sex)), 
-             size = 2, alpha = .8) + 
-  theme_bw() +
-  theme(panel.background = element_rect(fill = "white")) + 
-  theme(panel.grid = element_blank(), 
-        legend.title = element_blank()) +
-  xlab("Carapace length (mm)") + 
-  ylab(expression(paste("Predicted values of log(Home Range + 1) ", (m^2)))) + 
-  coord_cartesian(ylim=c(0, 12)) + 
-  scale_color_discrete(labels = c("Female", "Juvenile", "Male")) +
-  scale_fill_discrete(labels = c("Female", "Juvenile", "Male")) +
-  scale_shape(labels = c("Female", "Juvenile", "Male"))
+  theme_bw() + 
+  theme(axis.title.x = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank()) + 
+  theme(legend.position = "none") + 
+  theme(text = element_text(size = 12), 
+        axis.text = element_text(size = 12), 
+        strip.text = element_text(size = 12))
 
 
 
@@ -260,15 +189,15 @@ SABE.seasonDistResults <- merge(SABE.seasonDistResults, bio,
                                 by.x = c("turtle.id"), by.y = c("turtle.id"))
 
 distMd.global <- lmer(AvgDist ~ # Biometric vars
-                                 sex + scale(cl) + scale(I(cl^2)) + 
+                                 sex + poly(scale(cl),2) + 
                                 # Seasonal response
                                  season.4 + 
                                 # Reproductive drive
                                  sex * season.4 + 
                                 # Thermoregulative drive
-                                 (scale(cl) + scale(I(cl^2))) * season.4 + 
+                                  poly(scale(cl),2) * season.4 + 
                                 # Individual var.
-                                 (1|turtle.id),
+                                  (1|turtle.id),
                       data = SABE.seasonDistResults, na.action = "na.fail")
 step(distMd.global)
 
@@ -307,6 +236,11 @@ ggplot(SABE.seasonDailyDistResults, aes(x = season.4, y = AvgDist, col = sex)) +
         legend.title = element_blank()) + 
   scale_color_discrete(labels = c("Female", "Juvenile", "Male")) +
   scale_fill_discrete(labels = c("Female", "Juvenile", "Male")) +
-  scale_shape(labels = c("Female", "Juvenile", "Male"))
+  scale_shape(labels = c("Female", "Juvenile", "Male")) + 
+  theme(text = element_text(size = 12), 
+        axis.text = element_text(size = 12), 
+        strip.text = element_text(size = 12), 
+        legend.text = element_text(size = 12))
+
   
 
