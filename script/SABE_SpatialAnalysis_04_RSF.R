@@ -126,7 +126,7 @@ selectNH <- scale(selectNH)
 select.dist <- vegdist(selectH, method = "euclidean")
 select.dist
 
-select.div <- adonis2(select.dist ~ as.factor(select$session), data = select, permutation = 9999)
+select.div <- adonis2(select.dist ~ as.factor(select$session), data = select, permutation = 9999) 
 select.div
 
 ## Nmds plot (diurnal)
@@ -233,11 +233,7 @@ plot(turtlesRSFN.Mod.sim)
 
 ### Plotting ----
 #### Plots of Coefficient Estimates ----
-#### Figure 4.
-y.labels <- expression("Canopy cover"^2, "Canopy cover", "Leaf litter"^2, "Leaf litter", 
-                       "Cobble"^2, "Cobble", "Pebble"^2, "Pebble", "Gravel"^2, "Gravel", 
-                       "Stream Width"^2, "Stream Width", "Water Depth"^2, "Water Depth")
-
+#### Figure 3.
 turtlesRSFD.Mod.coef <- tidy(turtlesRSFD.Mod, conf.int = TRUE)
 turtlesRSFD.Mod.coef <- turtlesRSFD.Mod.coef %>% filter(effect == "fixed")
 turtlesRSFD.Mod.coef$session <- "Day"
@@ -255,6 +251,13 @@ turtlesRSF.Mod.coef$term <- sub(paste0(".*", "[(]", "I", "[(]"), "", turtlesRSF.
 turtlesRSF.Mod.coef$term <- sub(paste0("[)]", "[)]"), "", turtlesRSF.Mod.coef$term)
 turtlesRSF.Mod.coef$term <- gsub("\\(|)", "", turtlesRSF.Mod.coef$term)
 
+turtlesRSF.Mod.coef$fun <- ifelse(grepl('^2', turtlesRSF.Mod.coef$term, fixed=TRUE), "quadratic", "linear")
+turtlesRSF.Mod.coef$variable <- gsub("\\^2", "", turtlesRSF.Mod.coef$term)
+turtlesRSF.Mod.coef$variable <- gsub("([a-z])([A-Z])","\\1 \\2", turtlesRSF.Mod.coef$variable)
+turtlesRSF.Mod.coef$variable <- str_to_title(turtlesRSF.Mod.coef$variable)
+turtlesRSF.Mod.coef$variable[turtlesRSF.Mod.coef$variable == "Litter"] <- "Leaf Litter"
+turtlesRSF.Mod.coef$variable[turtlesRSF.Mod.coef$variable == "Canopy"] <- "Canopy Cover"
+
 turtlesRSF.Mod.coef <- turtlesRSF.Mod.coef %>% rename(model = group)
 turtlesRSF.Mod.coef[!turtlesRSF.Mod.coef$model %in% c("2020 Mating Season", "2020 Dry Season", "2021 Nesting Season", 
                                                       "2021 Wet Season", "2021 Mating Season", "(Intercept)"), "model"] <- "2020 Wet Season"
@@ -262,44 +265,68 @@ turtlesRSF.Mod.coef[!turtlesRSF.Mod.coef$model %in% c("2020 Mating Season", "202
 seasonLv <- c("2020 Wet Season", "2021 Wet Season", "2020 Mating Season", "2021 Mating Season", 
               "2020 Dry Season", "2021 Dry Season", "2021 Nesting Season", "2022 Nesting Season")
 emptyRSF <- data.frame(expand.grid(model = factor(seasonLv, levels = seasonLv), 
-                                   term = levels(factor(turtlesRSF.Mod.coef$term)), 
+                                   variable = levels(factor(turtlesRSF.Mod.coef$variable)), 
                                    session = levels(factor(turtlesRSF.Mod.coef$session))))
 turtlesRSF.Mod.coef <- merge(emptyRSF, turtlesRSF.Mod.coef, 
-                             by = c("model", "term", "session"), 
+                             by = c("model", "variable", "session"), 
                              all.x = TRUE)
 turtlesRSF.Mod.coef$effect <- "fixed"
 turtlesRSF.Mod.coef$component <- "cond"
-turtlesRSF.Mod.coef <- turtlesRSF.Mod.coef %>% filter(term != "Intercept")
-turtlesRSF.Mod.coef$term <- factor(turtlesRSF.Mod.coef$term, 
-                                   levels = c("waterDepth", "waterDepth^2", "streamWidth", "streamWidth^2", 
-                                              "gravel", "gravel^2", "pebble", "pebble^2", "cobble", "cobble^2", 
-                                              "litter", "litter^2", "canopy", "canopy^2")) 
+turtlesRSF.Mod.coef <- turtlesRSF.Mod.coef %>% filter(variable != "Intercept")
+turtlesRSF.Mod.coef$variable <- factor(turtlesRSF.Mod.coef$variable, 
+                                       levels = c("Water Depth", "Stream Width",  
+                                                  "Gravel", "Pebble", "Cobble",  
+                                                  "Leaf Litter", "Canopy Cover")) 
 turtlesRSF.Mod.coef$year <- as.numeric(substr(turtlesRSF.Mod.coef$model, 1, 4))
 turtlesRSF.Mod.coef$year <- as.factor(turtlesRSF.Mod.coef$year)
 turtlesRSF.Mod.coef$season <- sub(".*^\\d+\\s", "", turtlesRSF.Mod.coef$model)
 turtlesRSF.Mod.coef$season <- as.factor(turtlesRSF.Mod.coef$season)
 
 turtlesRSF.Mod.coef %>% 
+  arrange(fun) %>% 
   filter(model %in% c("2020 Wet Season", "2020 Mating Season", "2020 Dry Season", "2021 Nesting Season")) %>%
-  arrange(factor(season, levels = c("Wet Season", "Mating Season", 
-                                    "Dry Season", "Nesting Season"))) %>%
-  dwplot(whisker_args = list(aes(col = season), size = .6), 
-         dot_args = list(aes(col = season), size = 2, fill = "white"), 
-         dodge_size = 1, 
-         show_intercept = FALSE) + 
-  theme_classic() +
-  xlab("Coefficient Estimate") + 
+  mutate(sign = ifelse(p.value<0.05, ifelse(estimate>0, "pos", "neg"), "ns")) %>% 
+  drop_na(estimate) %>% 
+  transform(estimate = abs(estimate), 
+            conf.low = abs(estimate) - 1.96*std.error, 
+            conf.high = abs(estimate) + 1.96*std.error) %>% 
+  ggplot(aes(x = estimate, y = factor(variable, 
+                                      levels = rev(levels(factor(variable)))), 
+             shape = factor(fun, 
+                            levels = rev(levels(factor(fun)))), 
+             col = factor(sign, 
+                          levels = rev(c("pos", "neg", "ns"))))) + 
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), 
+                size = .6, width = 0, 
+                position = position_dodge(.8)) + 
+  geom_point(size = 3, 
+             position = position_dodge(.8)) + 
+  theme_bw() +
+  xlab("| Coefficient Estimate |") + 
   ylab("") + 
-  scale_y_discrete(labels = y.labels) + 
-  scale_colour_manual(values = c("Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3], 
-                                 "Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4], 
-                                 "Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2], 
-                                 "Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
+  # scale_y_discrete(labels = rev(y.labels)) +
+  scale_shape_manual(values = c("linear" = 16, 
+                                "quadratic" = 17), 
+                     guide = guide_legend(reverse = TRUE), 
+                     labels = rev(c("Linear response", "Quadratic response"))) + 
+  scale_colour_manual(values = c("pos" = "#EE6677", 
+                                 "neg" = "#4477AA", 
+                                 "ns" = "grey"), 
+                      guide = guide_legend(reverse = TRUE), 
+                      labels = rev(c("Postively significant", "Negatively significant", "Non-significance"))) +
+  
   theme(legend.position = "right", 
         legend.title = element_blank()) +
-  guides(col=guide_legend(title="Season")) + 
   geom_vline(xintercept = 0, colour = "grey60", linetype = 2) +
-  facet_grid(~session)
+  facet_grid(session ~ factor(season, 
+                              levels = c("Wet Season", "Mating Season", "Dry Season", "Nesting Season")), 
+             scales = "free_y") + 
+  theme(text = element_text(size = 14), 
+        axis.text = element_text(size = 14), 
+        strip.text = element_text(size = 14), 
+        legend.text = element_text(size = 14))
+
+
 
 #### Plots of Marginal Effects ----
 #### Right Panel: Predicted Effect 
@@ -375,9 +402,9 @@ turtlesRSF.MEPlot = list()
 for(i in 1:I(length(levels(turtlesRSF.ME$variable)))){
   turtlesRSF.MEPlot[[i]] <- turtlesRSF.ME %>% 
     filter(group %in% c("2020 Wet Season", "2020 Mating Season", "2020 Dry Season", "2021 Nesting Season")) %>%
-    filter(variable != "canopy" | session != "Night") %>% 
+    filter(variable != "canopy" | session != "Night") %>%
     filter(variable %in% c(levels(turtlesRSF.ME$variable)[[i]])) %>%
-    mutate(ci_range = conf.high - conf.low) %>% 
+    plyr::mutate(ci_range = conf.high - conf.low) %>%
     filter(ci_range < 0.9) %>%
     ggplot(., aes(x = x, y = predicted, group = group)) +
     geom_line(aes(col = group), size = 1) +
@@ -386,23 +413,28 @@ for(i in 1:I(length(levels(turtlesRSF.ME$variable)))){
     ylab("Predicted probabilities") + 
     xlab(str_to_title(gsub("([A-Z])", " \\1", levels(turtlesRSF.ME$variable)[[i]]))) + 
     scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.2)) +
-    scale_colour_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3], 
-                                   "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4], 
-                                   "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2], 
-                                   "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) + 
-    scale_fill_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3], 
-                                 "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4], 
-                                 "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2], 
-                                 "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) + 
-    theme(strip.background.y  = element_blank(), 
-          strip.text.y = element_blank(), 
-          legend.title = element_blank(), 
-          legend.position = "bottom")+ 
+    scale_colour_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3],
+                                   "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4],
+                                   "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2],
+                                   "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
+    scale_fill_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3],
+                                 "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4],
+                                 "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2],
+                                 "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
+    theme(strip.background.y  = element_blank(),
+          strip.text.y = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "bottom") +
+    guides(colour=guide_legend(nrow=2,byrow=TRUE)) + 
+    theme(text = element_text(size = 16),
+          axis.text = element_text(size = 12),
+          strip.text = element_text(size = 16),
+          legend.text = element_text(size = 16)) +
     facet_grid(factor(season, levels = c("Wet Season", "Mating Season", 
                                          "Dry Season", "Nesting Season"))~session);
   
   if(levels(turtlesRSF.ME$variable)[[i]] != "canopy"){
-    turtlesRSF.MEPlot[[i]] <- turtlesRSF.MEPlot[[i]] + 
+    turtlesRSF.MEPlot[[i]] <- turtlesRSF.MEPlot[[i]] +
       geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
                 data.frame(session = "Night"), fill = "darkblue", alpha = .05, inherit.aes = FALSE)
   };
@@ -411,6 +443,11 @@ for(i in 1:I(length(levels(turtlesRSF.ME$variable)))){
 }
 
 #### Left Panel: Coefficient Values
+turtlesRSF.Mod.coef$term <- factor(turtlesRSF.Mod.coef$term, 
+                                   levels = c("waterDepth", "waterDepth^2", "streamWidth", "streamWidth^2", 
+                                              "gravel", "gravel^2", "pebble", "pebble^2", "cobble", "cobble^2", 
+                                              "litter", "litter^2", "canopy", "canopy^2")) 
+
 turtlesRSF.coefPlot = list()
 a = 1
 for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
@@ -426,11 +463,10 @@ for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
     filter(term != "canopy" | session != "Night") %>% 
     filter(term != "canopy^2" | session != "Night") %>%
     filter(term %in% c(levels(turtlesRSF.Mod.coef$term)[[a]], levels(turtlesRSF.Mod.coef$term)[[a+1]])) %>%
-    mutate(term = ifelse(term == levels(turtlesRSF.Mod.coef$term)[[a]], "Linear Term", "Quadratic Term")) %>%
     arrange(factor(season, levels = c("Wet Season", "Mating Season", 
                                       "Dry Season", "Nesting Season"))) %>%
     dwplot(whisker_args = list(aes(col = season), size = .6), 
-           dot_args = list(aes(col = season, pch = term), size = 2, fill = "white"), 
+           dot_args = list(aes(col = season, pch = fun), size = 4, fill = "white"), 
            dodge_size = 1, 
            show_intercept = TRUE) + 
     theme_classic() +
@@ -442,12 +478,18 @@ for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
                                    "Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4], 
                                    "Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2], 
                                    "Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
+    scale_shape_discrete(labels = c("Linear Function", "Quadratic Function")) +
     theme(legend.position = "bottom", 
           legend.title = element_blank(), 
           axis.text.y = element_blank(), 
           axis.ticks.y = element_blank(), 
           strip.text.y = element_blank()) +
-    guides(colour = "none") + 
+    theme(text = element_text(size = 16),
+          axis.text = element_text(size = 12),
+          strip.text = element_text(size = 16),
+          legend.text = element_text(size = 16)) +
+    guides(colour = "none", 
+           shape = guide_legend(nrow = 2, byrow = FALSE)) + 
     geom_vline(xintercept = 0, colour = "grey60", linetype = 2) +
     facet_grid(factor(season, levels = c("Wet Season", "Mating Season", 
                                          "Dry Season", "Nesting Season"))~session);
@@ -459,35 +501,42 @@ for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
 ## Water Depth
 ggarrange(turtlesRSF.coefPlot[[1]], 
           turtlesRSF.MEPlot[[1]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(2,3), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Stream Width
 ggarrange(turtlesRSF.coefPlot[[2]], 
           turtlesRSF.MEPlot[[2]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(2,3), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Gravel
 ggarrange(turtlesRSF.coefPlot[[3]], 
           turtlesRSF.MEPlot[[3]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(2,3), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Pebble
 ggarrange(turtlesRSF.coefPlot[[4]], 
           turtlesRSF.MEPlot[[4]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(2,3), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Cobble
 ggarrange(turtlesRSF.coefPlot[[5]], 
           turtlesRSF.MEPlot[[5]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(2,3), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Leaf Litter
 ggarrange(turtlesRSF.coefPlot[[6]], 
           turtlesRSF.MEPlot[[6]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(4,7), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
 ## Canopy Cover
 ggarrange(turtlesRSF.coefPlot[[7]], 
           turtlesRSF.MEPlot[[7]], 
-          ncol = 2, widths = c(2,4), 
-          labels = c("A", "B"))
+          ncol = 2, widths = c(4,7), 
+          labels = c("A", "B"), 
+          font.label = list(size = 16))
