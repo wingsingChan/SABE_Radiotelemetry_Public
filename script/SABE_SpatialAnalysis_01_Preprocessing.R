@@ -6,6 +6,7 @@ library(dplyr)
 library(labdsv)
 library(sp)
 library(sf)
+library(sfnetworks)
 library(rgeos)
 library(geosphere)
 library(stars)
@@ -14,7 +15,6 @@ library(ggplot2)
 library(ggmap)
 library(tmap)
 library(move)
-library(moveVis)
 library(ggspatial)
 library(randomcoloR)
 
@@ -43,7 +43,7 @@ movement %>%
   dplyr::count(turtle.id)
 
 ## Date, Time, Year, Month, Season
-movement$date <- as.Date(movement$date, "%d-%b-%y")
+movement$date <- parse_date(movement$date, "%d-%b-%y")
 movement$time <- paste(as.character(movement$date), as.character(movement$time))
 movement$time <- as.POSIXct(movement$time, format = "%Y-%m-%d %H:%M", tz="GMT")
 movement$month <- months(movement$time)
@@ -191,7 +191,7 @@ levels(turtlesBiometric$Transmitter.Freq.)
 turtlesBiometric$Pit.tag <- as.factor(as.character(turtlesBiometric$Pit.tag))
 
 ## Date
-turtlesBiometric$Date <- as.Date(turtlesBiometric$Date, "%d-%b-%y")
+turtlesBiometric$Date <- parse_date(turtlesBiometric$Date, "%d-%b-%y")
 
 ## Location
 turtlesBiometric$Location <- as.factor(as.character(turtlesBiometric$Location))
@@ -322,7 +322,7 @@ SABE.MCP100results <- data.frame(ID = SABE.MCP100$id,
                                  Area_m2 = SABE.MCP100$area)
 SABE.MCP100results <- merge(SABE.MCP100results, base, by.x = "ID", by.y = "turtle.id")
 
-SABE.MCP100results <- with(SABE.MCP100results, data.frame('turtle.id' = ID, 'sex' = Sex, 'cl' = CA, 'pl' = PA, 'wt' = Wt, 
+SABE.MCP100results <- with(SABE.MCP100results, data.frame('turtle.id' = ID, sex, cl, pl, wt, 
                                                           HR_Type, MCP_Lv, Area_m2, Pts))
 write.csv(SABE.MCP100results, "data/SABE_movement_mcp.csv", row.names = FALSE)
 
@@ -346,9 +346,157 @@ SABE.seasonMCP100results <- merge(SABE.seasonMCP100results, baseSeason,
                                   by.x = c("ID", "Season"), by.y = c("turtle.id", "season"))
 
 SABE.seasonMCP100results <- with(SABE.seasonMCP100results, data.frame('turtle.id' = ID, 'season' = Season, 
-                                                                      'sex' = Sex, 'cl' = CA, 'pl' = PA, 'wt' = Wt, 
+                                                                      sex, cl, pl, wt, 
                                                                       HR_Type, MCP_Lv, Area_m2, Pts))
 write.csv(SABE.seasonMCP100results, "data/SABE_movement_mcp_season.csv", row.names = FALSE)
+
+## Spatial Analysis -- Dynamic Brownian Bridge Movement Models (dBBMMs) ----
+## Set location error for dBBMM analyses
+set_loc.error <- 10
+set_grid.ext <- 50
+set_dimsize <- 1000
+
+## Set margin and window 
+set_mrg <- 3
+set_ws <- 7
+
+## Inputting dataset
+turtles <- turtles %>% arrange(turtle.id)
+str(turtles)
+
+dbbmm.list <- list()
+for(i in 1:length(levels(turtles$turtle.id))){
+  
+  data <- turtles %>% filter(turtle.id == levels(turtles$turtle.id)[i])
+  
+  ## Calculating trajectory
+  move <- move(x = data$location.lon, y = data$location.lat, 
+               time = data$time, 
+               proj = CRS("+init=epsg:4326"), 
+               data = data)
+  move <- spTransform(move, CRSobj = "+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs")
+  
+  ## Calculate the dynamic brownian motion variance
+  dbbv <- brownian.motion.variance.dyn(object = move, 
+                                       location.error = set_loc.error, 
+                                       window.size = set_ws,
+                                       margin = set_mrg)
+  dbbv@interest[timeLag(move,"mins")>10*24*60] <- FALSE
+  
+  ## Calculating dBBMM
+  dbbmm <- brownian.bridge.dyn(dbbv, 
+                               dimSize = set_dimsize,
+                               ext = set_grid.ext,
+                               location.error = set_loc.error,
+                               time.step = 768)
+  
+  ## Calculating and extracting dBBMM variance
+  tempname <- paste0("outputs/SABE_ID", levels(turtles$turtle.id)[i], "_dBBMM.data.csv")
+  data$var <- getMotionVariance(dbbmm)
+  write.csv(data, tempname)
+  
+  ## Extracting Raster
+  dbbmm.sp <- as(dbbmm, "SpatialPixelsDataFrame")
+  dbbmm.sp.ud <- new("estUD", dbbmm.sp)
+  dbbmm.sp.ud@vol = FALSE
+  dbbmm.sp.ud@h$meth = "dBBMM"
+  dbbmm.ud <- getvolumeUD(dbbmm.sp.ud, standardize = TRUE)
+  
+  r <- as(dbbmm.ud, "SpatialPixelsDataFrame") %>% raster()
+  
+  ## Extracting contours
+  contour.099 <- raster2contour(dbbmm, levels = .99, maxpixels = 1000000)
+  
+  tempname.099 <- paste0("outputs/SABE_ID", levels(turtles$turtle.id)[i], "_dBBMM.099")
+  write_sf(as(contour.099, "sf"), ".", tempname.099, driver = "ESRI shapefile")
+  
+  dbbmm.list[[i]] <- dbbmm
+  
+}
+
+## Spatial Analysis -- Summarising and Plotting dBBMMs ----
+## UD for Each Individuals on Plain Bkg
+SABE_ud_shp_file <- list.files(path = ".", 
+                               pattern = "outputs_SABE_ID.[0-9+]*._dBBMM.099.*shp",
+                               full.names = TRUE, 
+                               recursive = TRUE)
+SABE_ud_shp <- lapply(SABE_ud_shp_file, function(x){
+  dat <- st_read(x)
+  dat <- st_as_sf(dat)
+  dat <- st_polygonize(dat)
+  dat <- st_transform(dat, crs = "+proj=longlat")
+  dat$id <- as.character(x)
+  dat$id <- gsub("^\\D+(\\d+).*", "\\1", dat$id)
+  return(dat)
+})
+SABE_ud_shp <- bind_rows(SABE_ud_shp)
+
+SABE.UDresults <- SABE_ud_shp
+SABE.UDresults$area <- SABE.UDresults %>% 
+  st_transform("+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs") %>% 
+  st_area()
+
+SABE.UDresults <- data.frame(ID = SABE.UDresults$id, 
+                             HR_Type = "dBBMM",
+                             Ct_Vol = as.numeric(SABE.UDresults$level)*100,
+                             Area_m2 = as.numeric(SABE.UDresults$area))
+SABE.UDresults <- merge(SABE.UDresults, base, by.x = "ID", by.y = "turtle.id")
+
+## Spatial Analysis -- Stream Distance ---- 
+SABE.Sf <- st_as_sf(SABE.SpProj)
+SABE.Sf <- merge(SABE.Sf, base, by.x = "turtle.id", by.y = "turtle.id")
+names(SABE.Sf)[names(SABE.Sf)=="turtle.id"] <- "id"
+
+SABE.Sf_group <- SABE.Sf %>% 
+  group_by(id) %>% 
+  group_split()
+
+## MASK THE FILE NAME ----
+hydroline_utm <- st_read("data/HydrographyLine.shp") %>%
+  st_union() %>%  
+  st_transform(crs = "+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs")
+
+hydroline_sfn <- hydroline_utm %>%
+  st_cast("LINESTRING") %>% 
+  as_sfnetwork(directed = FALSE)  
+
+distance_per_group <- map(SABE.Sf_group, function(x){
+  
+  id <- unique(x$id)
+  
+  distance_matrix <- st_distance(x)
+  max_distance <- as.numeric(which(distance_matrix == max(distance_matrix), arr.ind = TRUE)[1,])
+  x <- x[max_distance,]
+  
+  start_on_path <- st_nearest_points(x[1,], hydroline_utm) %>% 
+    st_cast("POINT") %>% 
+    st_difference(., st_geometry(x[1,]))
+  end_on_path <- st_nearest_points(x[2,], hydroline_utm) %>%
+    st_cast("POINT") %>%
+    st_difference(., st_geometry(x[2,]))
+  
+  points_on_path <- st_nearest_points(x, hydroline_utm)
+  
+  dist1 <- st_distance(x[1,], start_on_path)
+  dist2 <- st_distance(x[2,], end_on_path)
+  
+  joint_sfn <- st_network_blend(hydroline_sfn, st_geometry(x))
+  
+  stream_distances <- st_network_cost(x = joint_sfn,
+                                      from = start_on_path,
+                                      to = end_on_path,
+                                      direction = "all") 
+  
+  dist <- as.numeric(dist1) + as.numeric(dist2) + as.numeric(stream_distances)
+  
+  data.frame(ID = id, 
+             HR_Type = "Stream distance",
+             Ct_Vol = 100,
+             Area_m2 = dist)
+  
+})
+distance_per_group <- bind_rows(distance_per_group)
+SABE.streamDistResulsts <- merge(distance_per_group, base, by.x = "ID", by.y = "turtle.id")
 
 ## Spatial Analysis -- Displacement Distance ---- 
 ## Creating Spatial Point Data Frame
@@ -430,7 +578,7 @@ SABE.trajDf$dailyDist <- SABE.trajDf$dist/(SABE.trajDf$dt/(60*60*24))
 
 ## Save Dataset
 SABE.trajDf <- with(SABE.trajDf, data.frame(turtle.id, radio.id, 
-                                            'sex' = Sex, 'cl' = CA, 'pl' = PA, 'wt' = Wt, 
+                                            sex, cl, pl, wt, 
                                             year, month, season, dx, dy, dist, dt, dailyDist))
 write.csv(SABE.trajDf, "data/SABE_movement_dist.csv", row.names = FALSE)
 
@@ -445,7 +593,7 @@ View(habitat)
 str(habitat)
 
 #### Date, Month and Year
-habitat$Date <- as.Date(habitat$Date, "%d-%b-%y")
+habitat$Date <- parse_date(habitat$Date, "%d-%b-%y")
 habitat$Month[habitat$Month == "Apirl"] <- "April"
 habitat$Month <- factor(habitat$Month, c("January", "February", "March", "April", "May", "June", 
                                          "July", "August", "September", "October", "November", "December"))
