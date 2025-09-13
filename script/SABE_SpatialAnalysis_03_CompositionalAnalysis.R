@@ -293,10 +293,9 @@ dSeasonSummary <- rbind(daSeasonSummary, dbSeasonSummary)
 dSeasonSummary$season <- factor(dSeasonSummary$season, levels = seasonLv)
 
 relativeHS2 <- ggplot(filter(dSummary, lv == "Second Order"), aes(x = variable, y = mean, col = lv)) +
-  geom_point(size = 8, position = position_dodge(.2)) +
+  geom_point(size = 4, position = position_dodge(.2)) +
   geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.1, position = position_dodge(.2)) + 
-  geom_jitter(data = filter(dData, lv == "Second Order"), aes(x = variable, y = value, fill = lv), size = 4, alpha = 0.2, position = position_jitter(.05)) + 
-  # geom_point(., position = position_dodge(.2))
+  geom_jitter(data = filter(dData, lv == "Second Order"), aes(x = variable, y = value, fill = lv), size = 2, alpha = 0.2, position = position_jitter(.05)) + 
   geom_hline(yintercept = 0) + 
   ylab(expression(paste("Relative use of habitat ", italic(" i"), " (", italic("d"["i"]), ")"))) +
   scale_color_manual(values = c("dark red")) +
@@ -304,10 +303,10 @@ relativeHS2 <- ggplot(filter(dSummary, lv == "Second Order"), aes(x = variable, 
   theme(axis.title.x = element_blank(), 
         legend.position = "none", 
         axis.title.y = element_blank()) + 
-  theme(text = element_text(size = 20), 
-        axis.text = element_text(size = 20), 
-        strip.text = element_text(size = 20), 
-        legend.text = element_text(size = 20))
+  theme(text = element_text(size = 12), 
+        axis.text = element_text(size = 12), 
+        strip.text = element_text(size = 12), 
+        legend.text = element_text(size = 12))
 relativeHS2
 
 relativeSeasonHS2 <- ggplot(filter(dSeasonSummary, lv == "Second Order"), aes(x = variable, y = mean, col = lv)) +
@@ -315,7 +314,6 @@ relativeSeasonHS2 <- ggplot(filter(dSeasonSummary, lv == "Second Order"), aes(x 
   geom_point(size = 4, position = position_dodge(.2)) +
   geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.05, position = position_dodge(.2)) + 
   geom_jitter(data = filter(dSeasonData, lv == "Second Order"), aes(x = variable, y = value, fill = lv), size = 2, alpha = 0.2, position = position_jitter(.05)) + 
-  # geom_point(., position = position_dodge(.2))
   geom_hline(yintercept = 0) + 
   scale_color_manual(values = c("dark red")) +
   theme_bw() +
@@ -331,10 +329,9 @@ relativeSeasonHS2 <- ggplot(filter(dSeasonSummary, lv == "Second Order"), aes(x 
 relativeSeasonHS2
 
 relativeHS3 <- ggplot(filter(dSummary, lv == "Third Order"), aes(x = variable, y = mean, col = lv)) +
-  geom_point(size = 8, position = position_dodge(.2)) +
+  geom_point(size = 4, position = position_dodge(.2)) +
   geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.1, position = position_dodge(.2)) + 
-  geom_jitter(data = filter(dData, lv == "Third Order"), aes(x = variable, y = value, fill = lv), size = 4, alpha = 0.2, position = position_jitter(.05)) + 
-  # geom_point(., position = position_dodge(.2))
+  geom_jitter(data = filter(dData, lv == "Third Order"), aes(x = variable, y = value, fill = lv), size = 2, alpha = 0.2, position = position_jitter(.05)) + 
   geom_hline(yintercept = 0) + 
   ylab(expression(paste("Relative use of habitat ", italic(" i"), " (", italic("d"["i"]), ")"))) +
   scale_y_continuous(breaks = seq(-10, 10, by = 2)) +
@@ -343,10 +340,10 @@ relativeHS3 <- ggplot(filter(dSummary, lv == "Third Order"), aes(x = variable, y
   theme(axis.title.x = element_blank(), 
         legend.position = "none", 
         axis.title.y = element_blank()) + 
-  theme(text = element_text(size = 20), 
-        axis.text = element_text(size = 20), 
-        strip.text = element_text(size = 20), 
-        legend.text = element_text(size = 20))
+  theme(text = element_text(size = 12), 
+        axis.text = element_text(size = 12), 
+        strip.text = element_text(size = 12), 
+        legend.text = element_text(size = 12))
 relativeHS3
 
 relativeSeasonHS3 <- ggplot(filter(dSeasonSummary, lv == "Third Order"), aes(x = variable, y = mean, col = lv)) +
@@ -354,7 +351,6 @@ relativeSeasonHS3 <- ggplot(filter(dSeasonSummary, lv == "Third Order"), aes(x =
   geom_point(size = 4, position = position_dodge(.2)) +
   geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.05, position = position_dodge(.2)) + 
   geom_jitter(data = filter(dSeasonData, lv == "Third Order"), aes(x = variable, y = value, fill = lv), size = 2, alpha = 0.2, position = position_jitter(.05)) + 
-  # geom_point(., position = position_dodge(.2))
   geom_hline(yintercept = 0) + 
   scale_y_continuous(breaks = seq(-10, 10, by = 2)) +
   scale_color_manual(values = c("dark blue")) + 
@@ -370,22 +366,26 @@ relativeSeasonHS3 <- ggplot(filter(dSeasonSummary, lv == "Third Order"), aes(x =
         axis.text = element_text(size = 14))
 relativeSeasonHS3
 
-## Figure S6a
-relativeHSii <- grid.arrange(relativeHS2 + 
-                               theme(axis.title.y = element_text(angle = 90)) + 
-                               labs(title = "(a) Second-order selection") + 
-                               theme(plot.title = element_text(size = 20)), 
-                             relativeSeasonHS2, 
-                             ncol = 2, 
-                             widths = c(4,3))
+## Figure 4
+relativeHS2 <- relativeHS2 + 
+  theme(axis.title.y = element_text(angle = 90)) + 
+  labs(title = "(a) Second-order selection") + 
+  theme(plot.title = element_text(size = 12))
+relativeHS3 <- relativeHS3 + 
+  theme(axis.title.y = element_text(angle = 90)) + 
+  labs(title = "(b) Third-order selection") + 
+  theme(plot.title = element_text(size = 12))
+grid.arrange(relativeHS2, relativeHS3)
 
-## Figure S6b
-relativeHSiii <- grid.arrange(relativeHS3 + 
-                                theme(axis.title.y = element_text(angle = 90)) + 
-                                labs(title = "(b) Third-order selection") + 
-                                theme(plot.title = element_text(size = 20)), 
-                              relativeSeasonHS3, 
-                              ncol = 2, 
-                              widths = c(4,3))
-
-grid.arrange(relativeHSii, relativeHSiii)
+## Figure S6
+relativeSeasonHS2 <- relativeSeasonHS2 + 
+  ylab(expression(paste("Relative use of habitat ", italic(" i"), " (", italic("d"["i"]), ")"))) +
+  theme(axis.title.y = element_text(size = 20, angle = 90)) + 
+  labs(title = "(a) Second-order selection") + 
+  theme(plot.title = element_text(size = 20))
+relativeSeasonHS3 <- relativeSeasonHS3 + 
+  ylab(expression(paste("Relative use of habitat ", italic(" i"), " (", italic("d"["i"]), ")"))) +
+  theme(axis.title.y = element_text(size = 20, angle = 90)) + 
+  labs(title = "(b) Third-order selection") + 
+  theme(plot.title = element_text(size = 20))
+grid.arrange(relativeSeasonHS2, relativeSeasonHS3, nrow=1)

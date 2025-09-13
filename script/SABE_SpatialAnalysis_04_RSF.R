@@ -233,7 +233,7 @@ plot(turtlesRSFN.Mod.sim)
 
 ### Plotting ----
 #### Plots of Coefficient Estimates ----
-#### Figure 3.
+#### Figure 5
 turtlesRSFD.Mod.coef <- tidy(turtlesRSFD.Mod, conf.int = TRUE)
 turtlesRSFD.Mod.coef <- turtlesRSFD.Mod.coef %>% filter(effect == "fixed")
 turtlesRSFD.Mod.coef$session <- "Day"

@@ -149,7 +149,7 @@ mcpMd1.sim <- simulateResiduals(mcpMd1)
 plot(mcpMd1.sim)
 
 ### Plotting -- MCP vs Sex & Season 
-### Figure 2
+### Figure 3
 ggplot(SABE.seasonMCPresults, aes(x = sex, y = Area_m2, fill = sex, col = sex)) + 
   facet_grid(~season.4) + 
   geom_boxplot(outlier.shape = NA, alpha = .2) + 
@@ -225,7 +225,7 @@ distMd1.sim <- simulateResiduals(distMd1)
 plot(distMd1.sim)
 
 ### Plotting -- Displacement Distance & Sex | Season ----
-### Figure 1
+### Figure 2
 ggplot(SABE.seasonDailyDistResults, aes(x = season.4, y = AvgDist, col = sex)) +
   geom_point(aes(pch =  sex), size = 2, position = position_dodge(.6)) + 
   geom_errorbar(aes(ymin = lwr, ymax = upr), width = .1, position = position_dodge(.6)) + 
