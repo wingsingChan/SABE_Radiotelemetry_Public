@@ -350,98 +350,6 @@ SABE.seasonMCP100results <- with(SABE.seasonMCP100results, data.frame('turtle.id
                                                                       HR_Type, MCP_Lv, Area_m2, Pts))
 write.csv(SABE.seasonMCP100results, "data/SABE_movement_mcp_season.csv", row.names = FALSE)
 
-## Spatial Analysis -- Dynamic Brownian Bridge Movement Models (dBBMMs) ----
-## Set location error for dBBMM analyses
-set_loc.error <- 10
-set_grid.ext <- 50
-set_dimsize <- 1000
-
-## Set margin and window 
-set_mrg <- 3
-set_ws <- 7
-
-## Inputting dataset
-turtles <- turtles %>% arrange(turtle.id)
-str(turtles)
-
-dbbmm.list <- list()
-for(i in 1:length(levels(turtles$turtle.id))){
-  
-  data <- turtles %>% filter(turtle.id == levels(turtles$turtle.id)[i])
-  
-  ## Calculating trajectory
-  move <- move(x = data$location.lon, y = data$location.lat, 
-               time = data$time, 
-               proj = CRS("+init=epsg:4326"), 
-               data = data)
-  move <- spTransform(move, CRSobj = "+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs")
-  
-  ## Calculate the dynamic brownian motion variance
-  dbbv <- brownian.motion.variance.dyn(object = move, 
-                                       location.error = set_loc.error, 
-                                       window.size = set_ws,
-                                       margin = set_mrg)
-  dbbv@interest[timeLag(move,"mins")>10*24*60] <- FALSE
-  
-  ## Calculating dBBMM
-  dbbmm <- brownian.bridge.dyn(dbbv, 
-                               dimSize = set_dimsize,
-                               ext = set_grid.ext,
-                               location.error = set_loc.error,
-                               time.step = 768)
-  
-  ## Calculating and extracting dBBMM variance
-  tempname <- paste0("outputs/SABE_ID", levels(turtles$turtle.id)[i], "_dBBMM.data.csv")
-  data$var <- getMotionVariance(dbbmm)
-  write.csv(data, tempname)
-  
-  ## Extracting Raster
-  dbbmm.sp <- as(dbbmm, "SpatialPixelsDataFrame")
-  dbbmm.sp.ud <- new("estUD", dbbmm.sp)
-  dbbmm.sp.ud@vol = FALSE
-  dbbmm.sp.ud@h$meth = "dBBMM"
-  dbbmm.ud <- getvolumeUD(dbbmm.sp.ud, standardize = TRUE)
-  
-  r <- as(dbbmm.ud, "SpatialPixelsDataFrame") %>% raster()
-  
-  ## Extracting contours
-  contour.099 <- raster2contour(dbbmm, levels = .99, maxpixels = 1000000)
-  
-  tempname.099 <- paste0("outputs/SABE_ID", levels(turtles$turtle.id)[i], "_dBBMM.099")
-  write_sf(as(contour.099, "sf"), ".", tempname.099, driver = "ESRI shapefile")
-  
-  dbbmm.list[[i]] <- dbbmm
-  
-}
-
-## Spatial Analysis -- Summarising and Plotting dBBMMs ----
-## UD for Each Individuals on Plain Bkg
-SABE_ud_shp_file <- list.files(path = ".", 
-                               pattern = "outputs_SABE_ID.[0-9+]*._dBBMM.099.*shp",
-                               full.names = TRUE, 
-                               recursive = TRUE)
-SABE_ud_shp <- lapply(SABE_ud_shp_file, function(x){
-  dat <- st_read(x)
-  dat <- st_as_sf(dat)
-  dat <- st_polygonize(dat)
-  dat <- st_transform(dat, crs = "+proj=longlat")
-  dat$id <- as.character(x)
-  dat$id <- gsub("^\\D+(\\d+).*", "\\1", dat$id)
-  return(dat)
-})
-SABE_ud_shp <- bind_rows(SABE_ud_shp)
-
-SABE.UDresults <- SABE_ud_shp
-SABE.UDresults$area <- SABE.UDresults %>% 
-  st_transform("+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs") %>% 
-  st_area()
-
-SABE.UDresults <- data.frame(ID = SABE.UDresults$id, 
-                             HR_Type = "dBBMM",
-                             Ct_Vol = as.numeric(SABE.UDresults$level)*100,
-                             Area_m2 = as.numeric(SABE.UDresults$area))
-SABE.UDresults <- merge(SABE.UDresults, base, by.x = "ID", by.y = "turtle.id")
-
 ## Spatial Analysis -- Stream Distance ---- 
 SABE.Sf <- st_as_sf(SABE.SpProj)
 SABE.Sf <- merge(SABE.Sf, base, by.x = "turtle.id", by.y = "turtle.id")
@@ -451,7 +359,6 @@ SABE.Sf_group <- SABE.Sf %>%
   group_by(id) %>% 
   group_split()
 
-## MASK THE FILE NAME ----
 hydroline_utm <- st_read("data/HydrographyLine.shp") %>%
   st_union() %>%  
   st_transform(crs = "+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs")
@@ -489,14 +396,15 @@ distance_per_group <- map(SABE.Sf_group, function(x){
   
   dist <- as.numeric(dist1) + as.numeric(dist2) + as.numeric(stream_distances)
   
-  data.frame(ID = id, 
+  data.frame(turtle.id = id, 
              HR_Type = "Stream distance",
              Ct_Vol = 100,
-             Area_m2 = dist)
+             Distance_m = dist)
   
 })
 distance_per_group <- bind_rows(distance_per_group)
-SABE.streamDistResulsts <- merge(distance_per_group, base, by.x = "ID", by.y = "turtle.id")
+SABE.streamDistResulsts <- merge(distance_per_group, base, by = "turtle.id")
+write.csv(SABE.streamDistResulsts, "data/SABE_movement_stdistance.csv", row.names = FALSE)
 
 ## Spatial Analysis -- Displacement Distance ---- 
 ## Creating Spatial Point Data Frame

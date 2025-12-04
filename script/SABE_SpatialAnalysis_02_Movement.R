@@ -18,6 +18,7 @@ library(broom.mixed)
 
 ## Load Data ----
 SABE.MCPresults <- read.csv("data/SABE_movement_mcp.csv", header = TRUE)
+SABE.streamDistResulsts <- read.csv("data/SABE_movement_stdistance.csv", header = TRUE)
 SABE.MCPresults$sex <- as.factor(SABE.MCPresults$sex)
 SABE.seasonMCPresults <- read.csv("data/SABE_movement_mcp_season.csv", header = TRUE)
 SABE.seasonMCPresults$sex <- as.factor(SABE.seasonMCPresults$sex)
@@ -46,12 +47,17 @@ bio <- SABE.trajDf %>%
   distinct()
 
 ## Summary Statistics ----
-### Summary Table for MCP ----
+### Summary Table for Home Range Estimates ----
 ## Population Average
 SABE.MCPresults %>%
   subset(MCP_Lv == 100 & Pts > 5) %>% 
   dplyr::summarise(meanMCP = mean(Area_m2),
                    sdMCP = sd(Area_m2))
+
+SABE.streamDistResulsts %>%
+  subset(Ct_Vol == 100 & Pts > 5) %>% 
+  dplyr::summarise(meanDist = mean(Distance_m),
+                   sdDist = sd(Distance_m))
 
 ## Sexes
 SABE.MCPsummary <- SABE.MCPresults %>%
