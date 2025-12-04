@@ -12,6 +12,8 @@ All data are contained in the directory `data/`. The original data containing th
 
 -   `SABE_movement_mcp.csv` contains the calculated home range sizes of each individual across the entire study period
 
+-   `SABE_movement_stdist.csv` contains the 100% stream distances travelled by each individual across the entire study period
+
 -   `SABE_movement_mcp_season.csv` contains the calculated home range sizes of each individual for each respective season
 
 -   `SABE_movement_dist.csv` contains movement trajectories of each individual *S. bealei*
