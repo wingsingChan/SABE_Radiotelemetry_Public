@@ -297,9 +297,9 @@ turtlesRSF.Mod.coef %>%
              col = factor(sign, 
                           levels = rev(c("pos", "neg", "ns"))))) + 
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), 
-                size = .6, width = 0, 
+                size = 1, width = 0, 
                 position = position_dodge(.8)) + 
-  geom_point(size = 3, 
+  geom_point(size = 4, 
              position = position_dodge(.8)) + 
   theme_bw() +
   xlab("| Coefficient Estimate |") + 

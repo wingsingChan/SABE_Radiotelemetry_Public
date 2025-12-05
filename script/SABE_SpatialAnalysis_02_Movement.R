@@ -157,7 +157,9 @@ plot(mcpMd1.sim)
 ### Plotting -- MCP vs Sex & Season 
 ### Figure 3
 ggplot(SABE.seasonMCPresults, aes(x = sex, y = Area_m2, fill = sex, col = sex)) + 
-  facet_grid(~season.4) + 
+  facet_grid(~factor(season.4, 
+                     levels = c("Wet Season", "Mating Season", 
+                                "Dry Season", "Nesting Season"))) + 
   geom_boxplot(outlier.shape = NA, alpha = .2) + 
   geom_point(alpha = .6) +
   scale_x_discrete(labels = c("Female", "Juvenile", "Male")) + 
@@ -232,9 +234,13 @@ plot(distMd1.sim)
 
 ### Plotting -- Displacement Distance & Sex | Season ----
 ### Figure 2
-ggplot(SABE.seasonDailyDistResults, aes(x = season.4, y = AvgDist, col = sex)) +
-  geom_point(aes(pch =  sex), size = 2, position = position_dodge(.6)) + 
-  geom_errorbar(aes(ymin = lwr, ymax = upr), width = .1, position = position_dodge(.6)) + 
+ggplot(SABE.seasonDailyDistResults, aes(x = factor(season.4, 
+                                                   levels = c("Wet Season", "Mating Season", 
+                                                              "Dry Season", "Nesting Season")), 
+                                        y = AvgDist, 
+                                        col = sex)) +
+  geom_point(aes(pch =  sex), size = 4, position = position_dodge(.6)) + 
+  geom_errorbar(aes(ymin = lwr, ymax = upr), linewidth = 1, width = .25, position = position_dodge(.6)) + 
   ylab("Measured daily displacement distance (m)") + 
   theme_classic() +  
   theme(legend.position = c(.075,.9)) + 
