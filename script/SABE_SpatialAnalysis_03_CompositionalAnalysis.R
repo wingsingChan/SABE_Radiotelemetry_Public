@@ -319,8 +319,6 @@ relativeSeasonHS2 <- ggplot(filter(dSeasonSummary, lv == "Second Order"), aes(x 
   theme_bw() +
   theme(panel.background = element_rect(fill = "gainsboro")) + 
   theme(axis.title = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
         axis.line.x = element_line(), 
         panel.grid = element_blank(), 
         legend.position = "none") + 
@@ -352,13 +350,11 @@ relativeSeasonHS3 <- ggplot(filter(dSeasonSummary, lv == "Third Order"), aes(x =
   geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = 0.05, position = position_dodge(.2)) + 
   geom_jitter(data = filter(dSeasonData, lv == "Third Order"), aes(x = variable, y = value, fill = lv), size = 2, alpha = 0.2, position = position_jitter(.05)) + 
   geom_hline(yintercept = 0) + 
-  scale_y_continuous(breaks = seq(-10, 10, by = 2)) +
+  scale_y_continuous(breaks = seq(-10, 10, by = 5)) +
   scale_color_manual(values = c("dark blue")) + 
   theme_bw() +
   theme(panel.background = element_rect(fill = "gainsboro")) + 
   theme(axis.title = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
         axis.line.x = element_line(), 
         panel.grid = element_blank(), 
         legend.position = "none") + 

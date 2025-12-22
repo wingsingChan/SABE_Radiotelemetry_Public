@@ -413,14 +413,14 @@ for(i in 1:I(length(levels(turtlesRSF.ME$variable)))){
     ylab("Predicted probabilities") + 
     xlab(str_to_title(gsub("([A-Z])", " \\1", levels(turtlesRSF.ME$variable)[[i]]))) + 
     scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.2)) +
-    scale_colour_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3],
-                                   "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4],
-                                   "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2],
-                                   "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
-    scale_fill_manual(values = c("2020 Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3],
-                                 "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4],
-                                 "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2],
-                                 "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
+    scale_colour_manual(values = c("2020 Wet Season" = "#2A6EBBFF",
+                                   "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark2")[4],
+                                   "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark2")[2],
+                                   "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark2")[1])) +
+    scale_fill_manual(values = c("2020 Wet Season" = "#2A6EBBFF",
+                                 "2020 Mating Season" = colorspace::qualitative_hcl(4, "Dark2")[4],
+                                 "2020 Dry Season" = colorspace::qualitative_hcl(4, "Dark2")[2],
+                                 "2021 Nesting Season" = colorspace::qualitative_hcl(4, "Dark2")[1])) +
     theme(strip.background.y  = element_blank(),
           strip.text.y = element_blank(),
           legend.title = element_blank(),
@@ -474,9 +474,9 @@ for(i in 1:I(length(levels(turtlesRSF.Mod.coef$term))/2)){
     ylab("") + 
     scale_x_continuous(limits = c(-ceiling((as.numeric(max))), ceiling(as.numeric(max)))) + 
     ylab(str_to_title(gsub("([A-Z])", " \\1", levels(turtlesRSF.Mod.coef$term)[[a]]))) + 
-    scale_colour_manual(values = c("Wet Season" = colorspace::qualitative_hcl(4, "Dark3")[3], 
-                                   "Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4], 
-                                   "Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2], 
+    scale_colour_manual(values = c("Wet Season" = "#2A6EBBFF",
+                                   "Mating Season" = colorspace::qualitative_hcl(4, "Dark3")[4],
+                                   "Dry Season" = colorspace::qualitative_hcl(4, "Dark3")[2],
                                    "Nesting Season" = colorspace::qualitative_hcl(4, "Dark3")[1])) +
     scale_shape_discrete(labels = c("Linear Function", "Quadratic Function")) +
     theme(legend.position = "bottom", 
