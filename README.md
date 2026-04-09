@@ -1,8 +1,8 @@
-# Code and data for "Movement and space use patterns reveal greater vulnerability to environmental changes and poaching in the Beale’s eyed turtle (*Sacalia bealei*)"
+# Code and data for "Movement and space use patterns of the Beale’s eyed turtle (*Sacalia bealei*) suggest sensitivity to environmental changes and poaching"
 
 This repository contains the data and code used in the analysis of the spatial patterns, habitat selection and microhabitat uses of Beale's eyed turtles (*Sacalia bealei*) in Hong Kong Special Administrative Region:
 
-> Chan, W. S., Fong J. J., Bonebrake, T. C., & Sung, Y. H.  (2024) Movement and space use patterns reveal greater vulnerability to environmental changes and poaching in the Beale’s eyed turtle (*Sacalia bealei*). *In submission*.
+> Chan, W. S., Fong J. J., Bonebrake, T. C., & Sung, Y. H.  (In press) Movement and space use patterns of the Beale’s eyed turtle (*Sacalia bealei*) suggest sensitivity to environmental changes and poaching. Wildlife Letters.
 
 ## Data
 
